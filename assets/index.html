@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
@@ -115,7 +115,7 @@
       <button onclick="toggleLanguage()"
         class="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-sm font-semibold text-slate-700">
         <i class="fas fa-globe"></i>
-        <span id="lang-btn-text">English</span>
+        <span id="lang-btn-text">日本語</span>
       </button>
     </div>
 
@@ -125,12 +125,12 @@
       </div>
       <h1 class="text-5xl font-bold text-slate-900 tracking-tight mb-4">Ronin</h1>
       <p class="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
-        <span class="lang-ja">
+        <span class="lang-ja hidden">
           Masterless High-Availability Leader Election for Go. <br>
           <span class="text-sm font-normal text-slate-500">外部のetcdやKubernetesに依存せず、NATS JetStream (Raft)
             を内包して本番グレードの合意形成を実現します。</span>
         </span>
-        <span class="lang-en hidden">
+        <span class="lang-en">
           Masterless High-Availability Leader Election for Go. <br>
           <span class="text-sm font-normal text-slate-500">Ronin embeds NATS JetStream (Raft) as the consensus engine so
             you can ship leader election as part of a single binary.</span>
@@ -160,11 +160,11 @@
     <div class="max-w-4xl mx-auto px-4 text-center">
       <h2 class="text-3xl font-bold text-slate-900 mb-6">Why Ronin?</h2>
       <div class="text-slate-600 mb-8 leading-relaxed">
-        <p class="lang-ja">
+        <p class="lang-ja hidden">
           Kubernetes Lease Leader Election に近いセマンティクスのリーダー選出を、外部依存なしで提供します。<br>
           単一バイナリでクラスタ運用と選出ロジックを組み込めるため、運用が劇的にシンプルになります。
         </p>
-        <p class="lang-en hidden">
+        <p class="lang-en">
           Ronin provides leader election semantics similar to Kubernetes Lease Leader Election without depending on an
           external etcd or Kubernetes API Server.<br>
           Since it embeds the consensus engine, you can simplify operations by shipping a single binary.
@@ -175,43 +175,42 @@
         <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
           <h3 class="text-lg font-semibold text-slate-900 mb-2">
             <i class="fas fa-server text-slate-400 mr-2"></i>
-            <span class="lang-ja">従来のアプローチ</span>
-            <span class="lang-en hidden">Traditional Approach</span>
+            <span class="lang-ja hidden">従来のアプローチ</span>
+            <span class="lang-en">Traditional Approach</span>
           </h3>
           <ul class="text-left text-slate-600 space-y-2 text-sm">
             <li class="flex items-start"><i class="fas fa-times text-red-500 mt-1 mr-2"></i>
-              <span class="lang-ja">外部のetcd/Zookeeperクラスタが必要</span>
-              <span class="lang-en hidden">Requires external etcd/Zookeeper cluster</span>
+              <span class="lang-ja hidden">外部のetcd/Zookeeperクラスタが必要</span>
+              <span class="lang-en">Requires external etcd/Zookeeper cluster</span>
             </li>
             <li class="flex items-start"><i class="fas fa-times text-red-500 mt-1 mr-2"></i>
-              <span class="lang-ja">運用のオーバーヘッドが大きい</span>
-              <span class="lang-en hidden">High operational overhead</span>
+              <span class="lang-ja hidden">運用のオーバーヘッドが大きい</span>
+              <span class="lang-en">High operational overhead</span>
             </li>
             <li class="flex items-start"><i class="fas fa-times text-red-500 mt-1 mr-2"></i>
-              <span class="lang-ja">障害点が分散し管理が複雑</span>
-              <span class="lang-en hidden">Distributed failure points & complex management</span>
+              <span class="lang-ja hidden">障害点が分散し管理が複雑</span>
+              <span class="lang-en">Distributed failure points & complex management</span>
             </li>
           </ul>
         </div>
         <div class="bg-white p-6 rounded-xl border-l-4 border-blue-500 shadow-md">
           <h3 class="text-lg font-semibold text-blue-900 mb-2">
             <i class="fas fa-microchip text-blue-500 mr-2"></i>
-            <span class="lang-ja">Roninのアプローチ</span>
-            <span class="lang-en hidden">The Ronin Way</span>
+            <span class="lang-ja hidden">Roninのアプローチ</span>
+            <span class="lang-en">The Ronin Way</span>
           </h3>
           <ul class="text-left text-slate-600 space-y-2 text-sm">
             <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-2"></i>
-              <span class="lang-ja"><strong>外部ミドルウェア不要:</strong> Embedded NATS + JetStream</span>
-              <span class="lang-en hidden"><strong>No external middleware:</strong> Embedded NATS + JetStream</span>
+              <span class="lang-ja hidden"><strong>外部ミドルウェア不要:</strong> Embedded NATS + JetStream</span>
+              <span class="lang-en"><strong>No external middleware:</strong> Embedded NATS + JetStream</span>
             </li>
             <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-2"></i>
-              <span class="lang-ja"><strong>Safety 重視:</strong> 二重リーダー防止 / Stale leader退避</span>
-              <span class="lang-en hidden"><strong>Safety First:</strong> Prevents double leaders / Self-step
-                down</span>
+              <span class="lang-ja hidden"><strong>Safety 重視:</strong> 二重リーダー防止 / Stale leader退避</span>
+              <span class="lang-en"><strong>Safety First:</strong> Prevents double leaders / Self-step down</span>
             </li>
             <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-2"></i>
-              <span class="lang-ja"><strong>Manager/Candidate:</strong> 1プロセスで複数シャード選出</span>
-              <span class="lang-en hidden"><strong>Manager/Candidate:</strong> Multi-shard efficiency</span>
+              <span class="lang-ja hidden"><strong>Manager/Candidate:</strong> 1プロセスで複数シャード選出</span>
+              <span class="lang-en"><strong>Manager/Candidate:</strong> Multi-shard efficiency</span>
             </li>
           </ul>
         </div>
@@ -224,8 +223,8 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-12">
         <h2 class="text-3xl font-bold text-slate-900">Architecture Explorer</h2>
-        <p class="text-slate-500 mt-2 lang-ja">コンポーネントをクリックして、Roninがどのようにスケーラビリティを実現しているか確認してください。</p>
-        <p class="text-slate-500 mt-2 lang-en hidden">Click on the components below to understand how Ronin achieves
+        <p class="text-slate-500 mt-2 lang-ja hidden">コンポーネントをクリックして、Roninがどのようにスケーラビリティを実現しているか確認してください。</p>
+        <p class="text-slate-500 mt-2 lang-en">Click on the components below to understand how Ronin achieves
           scalability.</p>
       </div>
 
@@ -241,8 +240,8 @@
             <div class="text-amber-400 text-2xl mb-1"><i class="fas fa-network-wired"></i></div>
             <div class="font-bold">Manager</div>
             <div class="text-xs text-slate-400">
-              <span class="lang-ja">Infrastructure Layer</span>
-              <span class="lang-en hidden">Infrastructure Layer</span>
+              <span class="lang-ja hidden">Infrastructure Layer</span>
+              <span class="lang-en">Infrastructure Layer</span>
             </div>
           </div>
 
@@ -288,16 +287,17 @@
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-lg h-full">
           <div id="arch-info-default">
             <h3 class="text-xl font-bold text-slate-900 mb-4">Interactive Guide</h3>
-            <p class="text-slate-600 lang-ja">Roninは <span class="font-semibold text-blue-600">Manager-Candidate</span>
-              モデルを採用しています。1プロセスで複数キー（シャード）の選出を効率的に運用可能です。</p>
-            <p class="text-slate-600 lang-en hidden">Ronin uses a <span
+            <p class="text-slate-600 lang-ja hidden">Roninは <span
+                class="font-semibold text-blue-600">Manager-Candidate</span> モデルを採用しています。1プロセスで複数キー（シャード）の選出を効率的に運用可能です。
+            </p>
+            <p class="text-slate-600 lang-en">Ronin uses a <span
                 class="font-semibold text-blue-600">Manager-Candidate</span> architecture. This separation is crucial
               for running hundreds of election shards within a single process efficiently.</p>
 
-            <p class="text-slate-600 mt-4 lang-ja"><i class="fas fa-mouse-pointer text-slate-400 mr-2"></i>
+            <p class="text-slate-600 mt-4 lang-ja hidden"><i class="fas fa-mouse-pointer text-slate-400 mr-2"></i>
               左の図のコンポーネントをクリックして詳細を確認してください。</p>
-            <p class="text-slate-600 mt-4 lang-en hidden"><i class="fas fa-mouse-pointer text-slate-400 mr-2"></i> Click
-              a component on the diagram to learn more.</p>
+            <p class="text-slate-600 mt-4 lang-en"><i class="fas fa-mouse-pointer text-slate-400 mr-2"></i> Click a
+              component on the diagram to learn more.</p>
           </div>
 
           <div id="arch-info-manager" class="hidden animate-fade-in">
@@ -305,7 +305,7 @@
               <div class="p-2 bg-slate-900 rounded-lg mr-3"><i class="fas fa-network-wired text-amber-400"></i></div>
               <h3 class="text-xl font-bold text-slate-900">The Manager</h3>
             </div>
-            <div class="lang-ja">
+            <div class="lang-ja hidden">
               <p class="text-slate-600 text-sm mb-4"><strong>インフラストラクチャ層</strong>です。プロセスごとに1つのSingletonとして存在します。</p>
               <ul class="space-y-3 text-sm text-slate-600">
                 <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> 組み込みNATSサーバー
@@ -316,15 +316,14 @@
                 </li>
               </ul>
             </div>
-            <div class="lang-en hidden">
+            <div class="lang-en">
               <p class="text-slate-600 text-sm mb-4">The <strong>Infrastructure Layer</strong>. It is a Singleton per
                 process.</p>
               <ul class="space-y-3 text-sm text-slate-600">
                 <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> Manages the embedded
                   NATS Server lifecycle.</li>
                 <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> Maintains a
-                  <strong>single shared TCP connection</strong> to the cluster.
-                </li>
+                  <strong>single shared TCP connection</strong> to the cluster.</li>
                 <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> Enforces configuration
                   consistency across all candidates.</li>
               </ul>
@@ -336,7 +335,7 @@
               <div class="p-2 bg-blue-100 rounded-lg mr-3"><i class="fas fa-crown text-blue-600"></i></div>
               <h3 class="text-xl font-bold text-slate-900">The Candidate</h3>
             </div>
-            <div class="lang-ja">
+            <div class="lang-ja hidden">
               <p class="text-slate-600 text-sm mb-4"><strong>アプリケーション層</strong>です。特定のBucket/Keyに対する選出を担当します。</p>
               <ul class="space-y-3 text-sm text-slate-600">
                 <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> 特定のシャードの選出ロジック
@@ -344,11 +343,10 @@
                 <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> 軽量: Managerの接続を再利用
                 </li>
                 <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> コールバック:
-                  <code>OnElected</code>, <code>OnSteppingDown</code>
-                </li>
+                  <code>OnElected</code>, <code>OnSteppingDown</code></li>
               </ul>
             </div>
-            <div class="lang-en hidden">
+            <div class="lang-en">
               <p class="text-slate-600 text-sm mb-4">The <strong>Application Layer</strong>. You can have multiple
                 Candidates per process.</p>
               <ul class="space-y-3 text-sm text-slate-600">
@@ -357,8 +355,7 @@
                 <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> Lightweight: Reuses
                   the Manager's connection.</li>
                 <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> Handles callbacks:
-                  <code>OnElected</code>, <code>OnSteppingDown</code>.
-                </li>
+                  <code>OnElected</code>, <code>OnSteppingDown</code>.</li>
               </ul>
             </div>
           </div>
@@ -376,31 +373,31 @@
         <div class="feature-card bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md">
           <div class="text-blue-600 text-3xl mb-4"><i class="fas fa-shield-alt"></i></div>
           <h3 class="text-xl font-bold text-slate-900 mb-2">
-            <span class="lang-ja">Safety 重視</span>
-            <span class="lang-en hidden">Safety First</span>
+            <span class="lang-ja hidden">Safety 重視</span>
+            <span class="lang-en">Safety First</span>
           </h3>
-          <p class="text-slate-600 text-sm lang-ja">二重リーダーを防止し、Stale leader（古いリーダー）の自律退避メカニズムを実装しています。Kubernetes
+          <p class="text-slate-600 text-sm lang-ja hidden">二重リーダーを防止し、Stale leader（古いリーダー）の自律退避メカニズムを実装しています。Kubernetes
             Leaseに近いセマンティクスを提供します。</p>
-          <p class="text-slate-600 text-sm lang-en hidden">Prevents double leaders and self-steps down on stale
-            leadership. Provides semantics similar to Kubernetes Lease Leader Election.</p>
+          <p class="text-slate-600 text-sm lang-en">Prevents double leaders and self-steps down on stale leadership.
+            Provides semantics similar to Kubernetes Lease Leader Election.</p>
         </div>
         <!-- Embedded NATS Card -->
         <div class="feature-card bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md">
           <div class="text-amber-500 text-3xl mb-4"><i class="fas fa-cubes"></i></div>
           <h3 class="text-xl font-bold text-slate-900 mb-2">Embedded NATS</h3>
-          <p class="text-slate-600 text-sm lang-ja">NATS JetStream (Raft) を合意形成エンジンとして内包。単一バイナリで動作するため、複雑なミドルウェア構築は不要です。
-          </p>
-          <p class="text-slate-600 text-sm lang-en hidden">Embeds NATS JetStream (Raft) as the consensus engine. Run as
-            a single binary without setting up complex external middleware.</p>
+          <p class="text-slate-600 text-sm lang-ja hidden">NATS JetStream (Raft)
+            を合意形成エンジンとして内包。単一バイナリで動作するため、複雑なミドルウェア構築は不要です。</p>
+          <p class="text-slate-600 text-sm lang-en">Embeds NATS JetStream (Raft) as the consensus engine. Run as a
+            single binary without setting up complex external middleware.</p>
         </div>
         <!-- Observability Card -->
         <div class="feature-card bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md">
           <div class="text-green-500 text-3xl mb-4"><i class="fas fa-chart-line"></i></div>
           <h3 class="text-xl font-bold text-slate-900 mb-2">OpenTelemetry</h3>
-          <p class="text-slate-600 text-sm lang-ja">Leader状態、KVのRevision、更新失敗回数などを標準でメトリクス出力。MeterProviderの差し替えも可能です。
-          </p>
-          <p class="text-slate-600 text-sm lang-en hidden">Exports metrics for leadership status, KV revision, and
-            failure counts out of the box. Supports custom MeterProviders.</p>
+          <p class="text-slate-600 text-sm lang-ja hidden">
+            Leader状態、KVのRevision、更新失敗回数などを標準でメトリクス出力。MeterProviderの差し替えも可能です。</p>
+          <p class="text-slate-600 text-sm lang-en">Exports metrics for leadership status, KV revision, and failure
+            counts out of the box. Supports custom MeterProviders.</p>
         </div>
       </div>
     </div>
@@ -441,13 +438,13 @@
                   class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-600 rounded-full font-bold text-white mr-4 group-hover:scale-110 transition-transform">1</span>
                 <div>
                   <h4 class="font-bold text-white mb-1">
-                    <span class="lang-ja">1) Manager 起動</span>
-                    <span class="lang-en hidden">1) Start Manager</span>
+                    <span class="lang-ja hidden">1) Manager 起動</span>
+                    <span class="lang-en">1) Start Manager</span>
                   </h4>
-                  <p class="text-slate-400 text-sm lang-ja">embedded NATS server と shared connection を管理します。NodeIDは必須です。
-                  </p>
-                  <p class="text-slate-400 text-sm lang-en hidden">Starts the embedded NATS server and manages the
-                    shared connection. NodeID is required.</p>
+                  <p class="text-slate-400 text-sm lang-ja hidden">embedded NATS server と shared connection
+                    を管理します。NodeIDは必須です。</p>
+                  <p class="text-slate-400 text-sm lang-en">Starts the embedded NATS server and manages the shared
+                    connection. NodeID is required.</p>
                 </div>
               </div>
             </button>
@@ -459,12 +456,12 @@
                   class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-600 rounded-full font-bold text-white mr-4 group-hover:scale-110 transition-transform">2</span>
                 <div>
                   <h4 class="font-bold text-white mb-1">
-                    <span class="lang-ja">2) Candidate 作成</span>
-                    <span class="lang-en hidden">2) Create Candidate</span>
+                    <span class="lang-ja hidden">2) Candidate 作成</span>
+                    <span class="lang-en">2) Create Candidate</span>
                   </h4>
-                  <p class="text-slate-400 text-sm lang-ja">特定のbucket/keyに対する候補を作成し、OnElectedなどのコールバックを設定します。</p>
-                  <p class="text-slate-400 text-sm lang-en hidden">Creates a candidate for a specific bucket/key and
-                    configures callbacks like OnElected.</p>
+                  <p class="text-slate-400 text-sm lang-ja hidden">特定のbucket/keyに対する候補を作成し、OnElectedなどのコールバックを設定します。</p>
+                  <p class="text-slate-400 text-sm lang-en">Creates a candidate for a specific bucket/key and configures
+                    callbacks like OnElected.</p>
                 </div>
               </div>
             </button>
@@ -476,14 +473,13 @@
                   class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-600 rounded-full font-bold text-white mr-4 group-hover:scale-110 transition-transform">3</span>
                 <div>
                   <h4 class="font-bold text-white mb-1">
-                    <span class="lang-ja">Run & Application Loop</span>
-                    <span class="lang-en hidden">Run & Application Loop</span>
+                    <span class="lang-ja hidden">Run & Application Loop</span>
+                    <span class="lang-en">Run & Application Loop</span>
                   </h4>
-                  <p class="text-slate-400 text-sm lang-ja">Candidateを実行します。アプリ側では <code>IsLeader()</code> で状態を確認できます。
-                  </p>
-                  <p class="text-slate-400 text-sm lang-en hidden">Runs the Candidate. The app can check the status via
-                    <code>IsLeader()</code>.
-                  </p>
+                  <p class="text-slate-400 text-sm lang-ja hidden">Candidateを実行します。アプリ側では <code>IsLeader()</code>
+                    で状態を確認できます。</p>
+                  <p class="text-slate-400 text-sm lang-en">Runs the Candidate. The app can check the status via
+                    <code>IsLeader()</code>.</p>
                 </div>
               </div>
             </button>
@@ -503,36 +499,36 @@
             <i class="fas fa-eye mr-2"></i> Observability
           </div>
           <h2 class="text-3xl font-bold text-slate-900 mb-4">Built-in Metrics</h2>
-          <p class="text-slate-600 mb-6 lang-ja">
+          <p class="text-slate-600 mb-6 lang-ja hidden">
             アプリケーション側で OpenTelemetry SDK を設定していれば、Ronin はメトリクスを出力します。
           </p>
-          <p class="text-slate-600 mb-6 lang-en hidden">
+          <p class="text-slate-600 mb-6 lang-en">
             If your application configures the OpenTelemetry SDK, Ronin exports metrics automatically.
           </p>
           <ul class="space-y-4">
             <li class="flex items-center text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
               <span
                 class="font-mono text-xs bg-slate-200 px-2 py-1 rounded mr-3 text-slate-800">election.leader_status</span>
-              <span class="text-sm lang-ja">Gauge: leader なら 1、そうでなければ 0</span>
-              <span class="text-sm lang-en hidden">Gauge: 1 if leader, otherwise 0</span>
+              <span class="text-sm lang-ja hidden">Gauge: leader なら 1、そうでなければ 0</span>
+              <span class="text-sm lang-en">Gauge: 1 if leader, otherwise 0</span>
             </li>
             <li class="flex items-center text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
               <span
                 class="font-mono text-xs bg-slate-200 px-2 py-1 rounded mr-3 text-slate-800">election.leader_term</span>
-              <span class="text-sm lang-ja">Gauge: NATS KV の revision（フェンシングトークン）</span>
-              <span class="text-sm lang-en hidden">Gauge: NATS KV revision (fencing token)</span>
+              <span class="text-sm lang-ja hidden">Gauge: NATS KV の revision（フェンシングトークン）</span>
+              <span class="text-sm lang-en">Gauge: NATS KV revision (fencing token)</span>
             </li>
             <li class="flex items-center text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
               <span
                 class="font-mono text-xs bg-slate-200 px-2 py-1 rounded mr-3 text-slate-800">election.renew_failures_total</span>
-              <span class="text-sm lang-ja">Counter: renew 失敗回数</span>
-              <span class="text-sm lang-en hidden">Counter: Number of renew failures</span>
+              <span class="text-sm lang-ja hidden">Counter: renew 失敗回数</span>
+              <span class="text-sm lang-en">Counter: Number of renew failures</span>
             </li>
             <li class="flex items-center text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
               <span
                 class="font-mono text-xs bg-slate-200 px-2 py-1 rounded mr-3 text-slate-800">election.leader_changes_total</span>
-              <span class="text-sm lang-ja">Counter: 観測した leader 交代回数</span>
-              <span class="text-sm lang-en hidden">Counter: Number of observed leader changes</span>
+              <span class="text-sm lang-ja hidden">Counter: 観測した leader 交代回数</span>
+              <span class="text-sm lang-en">Counter: Number of observed leader changes</span>
             </li>
           </ul>
         </div>
@@ -565,60 +561,59 @@
         <div class="flex border-b border-slate-200 bg-slate-50">
           <button onclick="showTab('cluster')" id="tab-btn-cluster"
             class="flex-1 py-4 text-center font-semibold text-sm tab-active transition-colors">
-            <span class="lang-ja">クラスタ要件</span>
-            <span class="lang-en hidden">Cluster Requirements</span>
+            <span class="lang-ja hidden">クラスタ要件</span>
+            <span class="lang-en">Cluster Requirements</span>
           </button>
           <button onclick="showTab('config')" id="tab-btn-config"
             class="flex-1 py-4 text-center font-semibold text-sm tab-inactive transition-colors">
-            <span class="lang-ja">Bucket 設定の共有</span>
-            <span class="lang-en hidden">Shared Config</span>
+            <span class="lang-ja hidden">Bucket 設定の共有</span>
+            <span class="lang-en">Shared Config</span>
           </button>
           <button onclick="showTab('shutdown')" id="tab-btn-shutdown"
             class="flex-1 py-4 text-center font-semibold text-sm tab-inactive transition-colors">
-            <span class="lang-ja">シャットダウン順序</span>
-            <span class="lang-en hidden">Shutdown Order</span>
+            <span class="lang-ja hidden">シャットダウン順序</span>
+            <span class="lang-en">Shutdown Order</span>
           </button>
         </div>
 
         <div class="p-8">
           <div id="tab-content-cluster">
             <h3 class="text-lg font-bold text-slate-900 mb-3"><i class="fas fa-server text-blue-500 mr-2"></i>
-              <span class="lang-ja">Quorum の必要性</span>
-              <span class="lang-en hidden">Quorum is Key</span>
+              <span class="lang-ja hidden">Quorum の必要性</span>
+              <span class="lang-en">Quorum is Key</span>
             </h3>
-            <p class="text-slate-600 text-sm leading-relaxed mb-4 lang-ja">
+            <p class="text-slate-600 text-sm leading-relaxed mb-4 lang-ja hidden">
               信頼性の高い選出には quorum が必要です。
             </p>
-            <p class="text-slate-600 text-sm leading-relaxed mb-4 lang-en hidden">
+            <p class="text-slate-600 text-sm leading-relaxed mb-4 lang-en">
               Reliable leader election needs a quorum.
             </p>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="p-4 bg-green-50 border border-green-100 rounded-lg">
-                <span class="font-bold text-green-700 block mb-1 lang-ja">3ノード以上 (推奨)</span>
-                <span class="font-bold text-green-700 block mb-1 lang-en hidden">3+ Nodes (Recommended)</span>
+                <span class="font-bold text-green-700 block mb-1 lang-ja hidden">3ノード以上 (推奨)</span>
+                <span class="font-bold text-green-700 block mb-1 lang-en">3+ Nodes (Recommended)</span>
 
-                <span class="text-xs text-green-600 lang-ja">1台障害に耐性があります。</span>
-                <span class="text-xs text-green-600 lang-en hidden">Tolerates one node failure.</span>
+                <span class="text-xs text-green-600 lang-ja hidden">1台障害に耐性があります。</span>
+                <span class="text-xs text-green-600 lang-en">Tolerates one node failure.</span>
               </div>
               <div class="p-4 bg-amber-50 border border-amber-100 rounded-lg">
-                <span class="font-bold text-amber-700 block mb-1 lang-ja">1ノード</span>
-                <span class="font-bold text-amber-700 block mb-1 lang-en hidden">1 Node</span>
+                <span class="font-bold text-amber-700 block mb-1 lang-ja hidden">1ノード</span>
+                <span class="font-bold text-amber-700 block mb-1 lang-en">1 Node</span>
 
-                <span class="text-xs text-amber-600 lang-ja">開発・単体用途向け。SPOFとなります。</span>
-                <span class="text-xs text-amber-600 lang-en hidden">For development. Single Point of Failure
-                  (SPOF).</span>
+                <span class="text-xs text-amber-600 lang-ja hidden">開発・単体用途向け。SPOFとなります。</span>
+                <span class="text-xs text-amber-600 lang-en">For development. Single Point of Failure (SPOF).</span>
               </div>
             </div>
           </div>
 
           <div id="tab-content-config" class="hidden">
             <h3 class="text-lg font-bold text-slate-900 mb-3"><i class="fas fa-cogs text-blue-500 mr-2"></i>
-              <span class="lang-ja">BucketName の共有</span>
-              <span class="lang-en hidden">BucketName Sharing</span>
+              <span class="lang-ja hidden">BucketName の共有</span>
+              <span class="lang-en">BucketName Sharing</span>
             </h3>
 
-            <div class="lang-ja">
+            <div class="lang-ja hidden">
               <p class="text-slate-600 text-sm leading-relaxed mb-4">
                 同じ <code>BucketName</code> を複数 Candidate で共有する場合、以下の設定を一致させる必要があります（Manager が検証します）。
               </p>
@@ -631,7 +626,7 @@
               </div>
             </div>
 
-            <div class="lang-en hidden">
+            <div class="lang-en">
               <p class="text-slate-600 text-sm leading-relaxed mb-4">
                 If multiple candidates share the same <code>BucketName</code>, their settings must match (enforced by
                 Manager).
@@ -649,11 +644,11 @@
 
           <div id="tab-content-shutdown" class="hidden">
             <h3 class="text-lg font-bold text-slate-900 mb-3"><i class="fas fa-power-off text-blue-500 mr-2"></i>
-              <span class="lang-ja">停止の手順</span>
-              <span class="lang-en hidden">Shutdown Procedure</span>
+              <span class="lang-ja hidden">停止の手順</span>
+              <span class="lang-en">Shutdown Procedure</span>
             </h3>
 
-            <div class="lang-ja">
+            <div class="lang-ja hidden">
               <p class="text-slate-600 text-sm leading-relaxed mb-4">
                 Candidate を停止（Run に渡した ctx を cancel）してから Manager を停止してください。
               </p>
@@ -667,7 +662,7 @@
               </div>
             </div>
 
-            <div class="lang-en hidden">
+            <div class="lang-en">
               <p class="text-slate-600 text-sm leading-relaxed mb-4">
                 Stop Candidates first (cancel the ctx passed to Run), then shut down the Manager.
               </p>
@@ -698,7 +693,7 @@
   <!-- JavaScript Logic -->
   <script>
     // --- Language Switcher Logic ---
-    let currentLang = 'ja';
+    let currentLang = 'en';
 
     function toggleLanguage() {
       currentLang = currentLang === 'ja' ? 'en' : 'ja';
