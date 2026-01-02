@@ -1,0 +1,42 @@
+{
+  "name": "ronin-dev",
+  "dockerComposeFile": [
+    "../compose.yaml"
+  ],
+  "service": "dev",
+  "workspaceFolder": "/src",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "/bin/bash"
+          }
+        }
+      },
+      "extensions": [
+        "golang.Go",
+        "yokoe.vscode-postfix-go",
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        "christian-kohler.path-intellisense",
+        "streetsidesoftware.code-spell-checker",
+        "redhat.vscode-yaml",
+        "Gruntfuggly.todo-tree",
+        "ms-azuretools.vscode-docker",
+        "yzhang.markdown-all-in-one",
+        "DavidAnson.vscode-markdownlint",
+        "bpruitt-goddard.mermaid-markdown-syntax-highlighting",
+        "bierner.markdown-mermaid"
+      ]
+    }
+  },
+  "postAttachCommand": "bash .devcontainer/attach-command.sh",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "installDockerComposeSwitch": false,
+      "moby": false
+    }
+  }
+}
