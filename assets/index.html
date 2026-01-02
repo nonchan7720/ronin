@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ronin - Masterless Leader Election for Go</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+    body {
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      background-color: #f8fafc;
+      /* Slate 50 */
+      color: #0f172a;
+      /* Slate 900 */
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+    }
+
+    code,
+    pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .chart-container {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      height: 300px;
+      max-height: 400px;
+    }
+
+    /* Custom Scrollbar for code blocks */
+    .custom-scroll::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
+    .architecture-node {
+      transition: all 0.3s ease;
+    }
+
+    .architecture-node:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .code-highlight {
+      background-color: #334155;
+      /* Slate 700 */
+      display: block;
+      width: 100%;
+    }
+
+    .feature-card {
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      border-color: #3b82f6;
+    }
+
+    .tab-active {
+      border-bottom: 2px solid #3b82f6;
+      color: #3b82f6;
+    }
+
+    .tab-inactive {
+      border-bottom: 2px solid transparent;
+      color: #64748b;
+    }
+
+    .tab-inactive:hover {
+      color: #334155;
+    }
+
+    /* Language Toggle Helpers */
+    .lang-en.hidden,
+    .lang-ja.hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body class="antialiased">
+
+  <!-- Header / Hero Section -->
+  <header class="bg-white border-b border-slate-200 relative">
+    <!-- Language Switcher -->
+    <div class="absolute top-4 right-4 z-10">
+      <button onclick="toggleLanguage()"
+        class="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-sm font-semibold text-slate-700">
+        <i class="fas fa-globe"></i>
+        <span id="lang-btn-text">English</span>
+      </button>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+      <div class="inline-flex items-center justify-center p-3 bg-blue-50 rounded-full mb-6">
+        <i class="fas fa-layer-group text-blue-600 text-2xl"></i>
+      </div>
+      <h1 class="text-5xl font-bold text-slate-900 tracking-tight mb-4">Ronin</h1>
+      <p class="text-xl text-slate-600 max-w-2xl mx-auto mb-8">
+        <span class="lang-ja">
+          Masterless High-Availability Leader Election for Go. <br>
+          <span class="text-sm font-normal text-slate-500">外部のetcdやKubernetesに依存せず、NATS JetStream (Raft)
+            を内包して本番グレードの合意形成を実現します。</span>
+        </span>
+        <span class="lang-en hidden">
+          Masterless High-Availability Leader Election for Go. <br>
+          <span class="text-sm font-normal text-slate-500">Ronin embeds NATS JetStream (Raft) as the consensus engine so
+            you can ship leader election as part of a single binary.</span>
+        </span>
+      </p>
+
+      <div class="flex justify-center items-center space-x-4 flex-col sm:flex-row gap-4 sm:gap-0">
+        <div class="bg-slate-900 text-slate-200 px-6 py-3 rounded-lg font-mono text-sm flex items-center shadow-lg">
+          <span class="text-amber-400 mr-2">$</span> <span id="install-text">go get github.com/nonchan7720/ronin</span>
+          <button onclick="copyInstall()" class="ml-4 text-slate-400 hover:text-white transition-colors"
+            title="Copy to clipboard">
+            <i class="far fa-copy"></i>
+          </button>
+        </div>
+        <a href="#code-walkthrough"
+          class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition-colors">
+          Get Started
+        </a>
+      </div>
+      <div id="copy-feedback" class="h-6 mt-2 text-sm text-green-600 font-medium opacity-0 transition-opacity">Copied!
+      </div>
+    </div>
+  </header>
+
+  <!-- Context: Introduction to the Problem Space -->
+  <section class="py-12 bg-slate-50">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold text-slate-900 mb-6">Why Ronin?</h2>
+      <div class="text-slate-600 mb-8 leading-relaxed">
+        <p class="lang-ja">
+          Kubernetes Lease Leader Election に近いセマンティクスのリーダー選出を、外部依存なしで提供します。<br>
+          単一バイナリでクラスタ運用と選出ロジックを組み込めるため、運用が劇的にシンプルになります。
+        </p>
+        <p class="lang-en hidden">
+          Ronin provides leader election semantics similar to Kubernetes Lease Leader Election without depending on an
+          external etcd or Kubernetes API Server.<br>
+          Since it embeds the consensus engine, you can simplify operations by shipping a single binary.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+          <h3 class="text-lg font-semibold text-slate-900 mb-2">
+            <i class="fas fa-server text-slate-400 mr-2"></i>
+            <span class="lang-ja">従来のアプローチ</span>
+            <span class="lang-en hidden">Traditional Approach</span>
+          </h3>
+          <ul class="text-left text-slate-600 space-y-2 text-sm">
+            <li class="flex items-start"><i class="fas fa-times text-red-500 mt-1 mr-2"></i>
+              <span class="lang-ja">外部のetcd/Zookeeperクラスタが必要</span>
+              <span class="lang-en hidden">Requires external etcd/Zookeeper cluster</span>
+            </li>
+            <li class="flex items-start"><i class="fas fa-times text-red-500 mt-1 mr-2"></i>
+              <span class="lang-ja">運用のオーバーヘッドが大きい</span>
+              <span class="lang-en hidden">High operational overhead</span>
+            </li>
+            <li class="flex items-start"><i class="fas fa-times text-red-500 mt-1 mr-2"></i>
+              <span class="lang-ja">障害点が分散し管理が複雑</span>
+              <span class="lang-en hidden">Distributed failure points & complex management</span>
+            </li>
+          </ul>
+        </div>
+        <div class="bg-white p-6 rounded-xl border-l-4 border-blue-500 shadow-md">
+          <h3 class="text-lg font-semibold text-blue-900 mb-2">
+            <i class="fas fa-microchip text-blue-500 mr-2"></i>
+            <span class="lang-ja">Roninのアプローチ</span>
+            <span class="lang-en hidden">The Ronin Way</span>
+          </h3>
+          <ul class="text-left text-slate-600 space-y-2 text-sm">
+            <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+              <span class="lang-ja"><strong>外部ミドルウェア不要:</strong> Embedded NATS + JetStream</span>
+              <span class="lang-en hidden"><strong>No external middleware:</strong> Embedded NATS + JetStream</span>
+            </li>
+            <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+              <span class="lang-ja"><strong>Safety 重視:</strong> 二重リーダー防止 / Stale leader退避</span>
+              <span class="lang-en hidden"><strong>Safety First:</strong> Prevents double leaders / Self-step
+                down</span>
+            </li>
+            <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+              <span class="lang-ja"><strong>Manager/Candidate:</strong> 1プロセスで複数シャード選出</span>
+              <span class="lang-en hidden"><strong>Manager/Candidate:</strong> Multi-shard efficiency</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Visualization: Architecture Explorer -->
+  <section class="py-16 bg-white border-y border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-slate-900">Architecture Explorer</h2>
+        <p class="text-slate-500 mt-2 lang-ja">コンポーネントをクリックして、Roninがどのようにスケーラビリティを実現しているか確認してください。</p>
+        <p class="text-slate-500 mt-2 lang-en hidden">Click on the components below to understand how Ronin achieves
+          scalability.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <!-- Diagram Area -->
+        <div class="lg:col-span-2 bg-slate-50 rounded-2xl p-8 border border-slate-200 relative overflow-hidden">
+          <div class="absolute top-4 left-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Process A (Node
+            1)</div>
+
+          <!-- Manager Node -->
+          <div onclick="showArchInfo('manager')"
+            class="architecture-node cursor-pointer bg-slate-900 text-white p-4 rounded-lg shadow-lg w-48 mx-auto mb-12 relative z-10 text-center hover:ring-4 hover:ring-blue-200">
+            <div class="text-amber-400 text-2xl mb-1"><i class="fas fa-network-wired"></i></div>
+            <div class="font-bold">Manager</div>
+            <div class="text-xs text-slate-400">
+              <span class="lang-ja">Infrastructure Layer</span>
+              <span class="lang-en hidden">Infrastructure Layer</span>
+            </div>
+          </div>
+
+          <!-- Connection Lines (CSS) -->
+          <div class="flex justify-center -mt-12 mb-8">
+            <div class="w-0.5 h-16 bg-slate-300"></div>
+          </div>
+          <div class="flex justify-center -mt-8 mb-8 relative">
+            <div class="w-64 h-0.5 bg-slate-300 absolute top-0"></div>
+            <div class="w-0.5 h-8 bg-slate-300 absolute top-0 left-[calc(50%-8rem)]"></div>
+            <div class="w-0.5 h-8 bg-slate-300 absolute top-0 right-[calc(50%-8rem)]"></div>
+          </div>
+
+          <!-- Candidate Nodes -->
+          <div class="flex justify-center space-x-12">
+            <div onclick="showArchInfo('candidate')"
+              class="architecture-node cursor-pointer bg-white border-2 border-blue-500 text-slate-800 p-4 rounded-lg shadow-md w-40 text-center hover:bg-blue-50">
+              <div class="text-blue-500 text-xl mb-1"><i class="fas fa-crown"></i></div>
+              <div class="font-bold text-sm">Candidate 1</div>
+              <div class="text-xs text-slate-500">Shard 1 Logic</div>
+            </div>
+            <div onclick="showArchInfo('candidate')"
+              class="architecture-node cursor-pointer bg-white border-2 border-blue-500 text-slate-800 p-4 rounded-lg shadow-md w-40 text-center hover:bg-blue-50">
+              <div class="text-blue-500 text-xl mb-1"><i class="fas fa-crown"></i></div>
+              <div class="font-bold text-sm">Candidate 2</div>
+              <div class="text-xs text-slate-500">Shard 2 Logic</div>
+            </div>
+          </div>
+
+          <!-- JetStream Layer -->
+          <div class="mt-12 pt-8 border-t border-slate-200">
+            <div class="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Embedded NATS
+              JetStream (Raft)</div>
+            <div class="flex justify-center space-x-4">
+              <div class="h-2 w-12 bg-amber-400 rounded-full animate-pulse"></div>
+              <div class="h-2 w-12 bg-slate-300 rounded-full"></div>
+              <div class="h-2 w-12 bg-slate-300 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-lg h-full">
+          <div id="arch-info-default">
+            <h3 class="text-xl font-bold text-slate-900 mb-4">Interactive Guide</h3>
+            <p class="text-slate-600 lang-ja">Roninは <span class="font-semibold text-blue-600">Manager-Candidate</span>
+              モデルを採用しています。1プロセスで複数キー（シャード）の選出を効率的に運用可能です。</p>
+            <p class="text-slate-600 lang-en hidden">Ronin uses a <span
+                class="font-semibold text-blue-600">Manager-Candidate</span> architecture. This separation is crucial
+              for running hundreds of election shards within a single process efficiently.</p>
+
+            <p class="text-slate-600 mt-4 lang-ja"><i class="fas fa-mouse-pointer text-slate-400 mr-2"></i>
+              左の図のコンポーネントをクリックして詳細を確認してください。</p>
+            <p class="text-slate-600 mt-4 lang-en hidden"><i class="fas fa-mouse-pointer text-slate-400 mr-2"></i> Click
+              a component on the diagram to learn more.</p>
+          </div>
+
+          <div id="arch-info-manager" class="hidden animate-fade-in">
+            <div class="flex items-center mb-4">
+              <div class="p-2 bg-slate-900 rounded-lg mr-3"><i class="fas fa-network-wired text-amber-400"></i></div>
+              <h3 class="text-xl font-bold text-slate-900">The Manager</h3>
+            </div>
+            <div class="lang-ja">
+              <p class="text-slate-600 text-sm mb-4"><strong>インフラストラクチャ層</strong>です。プロセスごとに1つのSingletonとして存在します。</p>
+              <ul class="space-y-3 text-sm text-slate-600">
+                <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> 組み込みNATSサーバー
+                  (ServerConfig) を管理</li>
+                <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i>
+                  クラスタへの<strong>単一の接続</strong>を維持</li>
+                <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> 全Candidate間で設定の一貫性を強制
+                </li>
+              </ul>
+            </div>
+            <div class="lang-en hidden">
+              <p class="text-slate-600 text-sm mb-4">The <strong>Infrastructure Layer</strong>. It is a Singleton per
+                process.</p>
+              <ul class="space-y-3 text-sm text-slate-600">
+                <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> Manages the embedded
+                  NATS Server lifecycle.</li>
+                <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> Maintains a
+                  <strong>single shared TCP connection</strong> to the cluster.
+                </li>
+                <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> Enforces configuration
+                  consistency across all candidates.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div id="arch-info-candidate" class="hidden animate-fade-in">
+            <div class="flex items-center mb-4">
+              <div class="p-2 bg-blue-100 rounded-lg mr-3"><i class="fas fa-crown text-blue-600"></i></div>
+              <h3 class="text-xl font-bold text-slate-900">The Candidate</h3>
+            </div>
+            <div class="lang-ja">
+              <p class="text-slate-600 text-sm mb-4"><strong>アプリケーション層</strong>です。特定のBucket/Keyに対する選出を担当します。</p>
+              <ul class="space-y-3 text-sm text-slate-600">
+                <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> 特定のシャードの選出ロジック
+                  (CandidateConfig)</li>
+                <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> 軽量: Managerの接続を再利用
+                </li>
+                <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> コールバック:
+                  <code>OnElected</code>, <code>OnSteppingDown</code>
+                </li>
+              </ul>
+            </div>
+            <div class="lang-en hidden">
+              <p class="text-slate-600 text-sm mb-4">The <strong>Application Layer</strong>. You can have multiple
+                Candidates per process.</p>
+              <ul class="space-y-3 text-sm text-slate-600">
+                <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> Manages election logic
+                  for a specific key (shard).</li>
+                <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> Lightweight: Reuses
+                  the Manager's connection.</li>
+                <li class="flex items-start"><i class="fas fa-check text-blue-500 mt-1 mr-2"></i> Handles callbacks:
+                  <code>OnElected</code>, <code>OnSteppingDown</code>.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature Deep Dive -->
+  <section class="py-16 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-3xl font-bold text-slate-900 text-center mb-12">Core Features</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Safety Card -->
+        <div class="feature-card bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md">
+          <div class="text-blue-600 text-3xl mb-4"><i class="fas fa-shield-alt"></i></div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">
+            <span class="lang-ja">Safety 重視</span>
+            <span class="lang-en hidden">Safety First</span>
+          </h3>
+          <p class="text-slate-600 text-sm lang-ja">二重リーダーを防止し、Stale leader（古いリーダー）の自律退避メカニズムを実装しています。Kubernetes
+            Leaseに近いセマンティクスを提供します。</p>
+          <p class="text-slate-600 text-sm lang-en hidden">Prevents double leaders and self-steps down on stale
+            leadership. Provides semantics similar to Kubernetes Lease Leader Election.</p>
+        </div>
+        <!-- Embedded NATS Card -->
+        <div class="feature-card bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md">
+          <div class="text-amber-500 text-3xl mb-4"><i class="fas fa-cubes"></i></div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">Embedded NATS</h3>
+          <p class="text-slate-600 text-sm lang-ja">NATS JetStream (Raft) を合意形成エンジンとして内包。単一バイナリで動作するため、複雑なミドルウェア構築は不要です。
+          </p>
+          <p class="text-slate-600 text-sm lang-en hidden">Embeds NATS JetStream (Raft) as the consensus engine. Run as
+            a single binary without setting up complex external middleware.</p>
+        </div>
+        <!-- Observability Card -->
+        <div class="feature-card bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md">
+          <div class="text-green-500 text-3xl mb-4"><i class="fas fa-chart-line"></i></div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">OpenTelemetry</h3>
+          <p class="text-slate-600 text-sm lang-ja">Leader状態、KVのRevision、更新失敗回数などを標準でメトリクス出力。MeterProviderの差し替えも可能です。
+          </p>
+          <p class="text-slate-600 text-sm lang-en hidden">Exports metrics for leadership status, KV revision, and
+            failure counts out of the box. Supports custom MeterProviders.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Code Walkthrough -->
+  <section id="code-walkthrough" class="py-16 bg-slate-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <!-- Code Display -->
+        <div>
+          <h2 class="text-3xl font-bold mb-6 text-white"><i class="fas fa-code mr-3 text-blue-400"></i>Minimal Example
+          </h2>
+          <div class="bg-slate-800 rounded-lg p-1 border border-slate-700 shadow-2xl">
+            <div class="flex items-center px-4 py-2 border-b border-slate-700 bg-slate-800/50 rounded-t-lg">
+              <div class="flex space-x-2 mr-4">
+                <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+              </div>
+              <span class="text-xs text-slate-400 font-mono">main.go</span>
+            </div>
+            <div class="p-4 overflow-x-auto custom-scroll font-mono text-sm leading-relaxed" id="code-block">
+              <!-- Code injected by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Steps -->
+        <div class="flex flex-col justify-center">
+          <h3 class="text-xl font-semibold text-blue-400 mb-6 uppercase tracking-wider text-sm">Implementation Steps
+          </h3>
+          <div class="space-y-6">
+            <button onclick="setStep(1)" id="btn-step-1"
+              class="w-full text-left p-4 rounded-lg bg-slate-800 border border-blue-500/50 hover:bg-slate-700 transition-all group">
+              <div class="flex items-start">
+                <span
+                  class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-600 rounded-full font-bold text-white mr-4 group-hover:scale-110 transition-transform">1</span>
+                <div>
+                  <h4 class="font-bold text-white mb-1">
+                    <span class="lang-ja">1) Manager 起動</span>
+                    <span class="lang-en hidden">1) Start Manager</span>
+                  </h4>
+                  <p class="text-slate-400 text-sm lang-ja">embedded NATS server と shared connection を管理します。NodeIDは必須です。
+                  </p>
+                  <p class="text-slate-400 text-sm lang-en hidden">Starts the embedded NATS server and manages the
+                    shared connection. NodeID is required.</p>
+                </div>
+              </div>
+            </button>
+
+            <button onclick="setStep(2)" id="btn-step-2"
+              class="w-full text-left p-4 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-all group">
+              <div class="flex items-start">
+                <span
+                  class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-600 rounded-full font-bold text-white mr-4 group-hover:scale-110 transition-transform">2</span>
+                <div>
+                  <h4 class="font-bold text-white mb-1">
+                    <span class="lang-ja">2) Candidate 作成</span>
+                    <span class="lang-en hidden">2) Create Candidate</span>
+                  </h4>
+                  <p class="text-slate-400 text-sm lang-ja">特定のbucket/keyに対する候補を作成し、OnElectedなどのコールバックを設定します。</p>
+                  <p class="text-slate-400 text-sm lang-en hidden">Creates a candidate for a specific bucket/key and
+                    configures callbacks like OnElected.</p>
+                </div>
+              </div>
+            </button>
+
+            <button onclick="setStep(3)" id="btn-step-3"
+              class="w-full text-left p-4 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 transition-all group">
+              <div class="flex items-start">
+                <span
+                  class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-600 rounded-full font-bold text-white mr-4 group-hover:scale-110 transition-transform">3</span>
+                <div>
+                  <h4 class="font-bold text-white mb-1">
+                    <span class="lang-ja">Run & Application Loop</span>
+                    <span class="lang-en hidden">Run & Application Loop</span>
+                  </h4>
+                  <p class="text-slate-400 text-sm lang-ja">Candidateを実行します。アプリ側では <code>IsLeader()</code> で状態を確認できます。
+                  </p>
+                  <p class="text-slate-400 text-sm lang-en hidden">Runs the Candidate. The app can check the status via
+                    <code>IsLeader()</code>.
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Observability Dashboard -->
+  <section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <div
+            class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wide mb-4">
+            <i class="fas fa-eye mr-2"></i> Observability
+          </div>
+          <h2 class="text-3xl font-bold text-slate-900 mb-4">Built-in Metrics</h2>
+          <p class="text-slate-600 mb-6 lang-ja">
+            アプリケーション側で OpenTelemetry SDK を設定していれば、Ronin はメトリクスを出力します。
+          </p>
+          <p class="text-slate-600 mb-6 lang-en hidden">
+            If your application configures the OpenTelemetry SDK, Ronin exports metrics automatically.
+          </p>
+          <ul class="space-y-4">
+            <li class="flex items-center text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
+              <span
+                class="font-mono text-xs bg-slate-200 px-2 py-1 rounded mr-3 text-slate-800">election.leader_status</span>
+              <span class="text-sm lang-ja">Gauge: leader なら 1、そうでなければ 0</span>
+              <span class="text-sm lang-en hidden">Gauge: 1 if leader, otherwise 0</span>
+            </li>
+            <li class="flex items-center text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
+              <span
+                class="font-mono text-xs bg-slate-200 px-2 py-1 rounded mr-3 text-slate-800">election.leader_term</span>
+              <span class="text-sm lang-ja">Gauge: NATS KV の revision（フェンシングトークン）</span>
+              <span class="text-sm lang-en hidden">Gauge: NATS KV revision (fencing token)</span>
+            </li>
+            <li class="flex items-center text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
+              <span
+                class="font-mono text-xs bg-slate-200 px-2 py-1 rounded mr-3 text-slate-800">election.renew_failures_total</span>
+              <span class="text-sm lang-ja">Counter: renew 失敗回数</span>
+              <span class="text-sm lang-en hidden">Counter: Number of renew failures</span>
+            </li>
+            <li class="flex items-center text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
+              <span
+                class="font-mono text-xs bg-slate-200 px-2 py-1 rounded mr-3 text-slate-800">election.leader_changes_total</span>
+              <span class="text-sm lang-ja">Counter: 観測した leader 交代回数</span>
+              <span class="text-sm lang-en hidden">Counter: Number of observed leader changes</span>
+            </li>
+          </ul>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-100">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-slate-800">Live Metrics Simulation</h3>
+            <span class="flex h-3 w-3 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+          </div>
+          <div class="chart-container">
+            <canvas id="metricsChart"></canvas>
+          </div>
+          <div class="mt-4 flex justify-between text-xs text-slate-400 font-mono">
+            <span>Last 60s</span>
+            <span>Now</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Operational Notes (Tabbed) -->
+  <section class="py-16 bg-slate-50 border-t border-slate-200">
+    <div class="max-w-4xl mx-auto px-4">
+      <h2 class="text-3xl font-bold text-slate-900 text-center mb-10">Operational Notes</h2>
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="flex border-b border-slate-200 bg-slate-50">
+          <button onclick="showTab('cluster')" id="tab-btn-cluster"
+            class="flex-1 py-4 text-center font-semibold text-sm tab-active transition-colors">
+            <span class="lang-ja">クラスタ要件</span>
+            <span class="lang-en hidden">Cluster Requirements</span>
+          </button>
+          <button onclick="showTab('config')" id="tab-btn-config"
+            class="flex-1 py-4 text-center font-semibold text-sm tab-inactive transition-colors">
+            <span class="lang-ja">Bucket 設定の共有</span>
+            <span class="lang-en hidden">Shared Config</span>
+          </button>
+          <button onclick="showTab('shutdown')" id="tab-btn-shutdown"
+            class="flex-1 py-4 text-center font-semibold text-sm tab-inactive transition-colors">
+            <span class="lang-ja">シャットダウン順序</span>
+            <span class="lang-en hidden">Shutdown Order</span>
+          </button>
+        </div>
+
+        <div class="p-8">
+          <div id="tab-content-cluster">
+            <h3 class="text-lg font-bold text-slate-900 mb-3"><i class="fas fa-server text-blue-500 mr-2"></i>
+              <span class="lang-ja">Quorum の必要性</span>
+              <span class="lang-en hidden">Quorum is Key</span>
+            </h3>
+            <p class="text-slate-600 text-sm leading-relaxed mb-4 lang-ja">
+              信頼性の高い選出には quorum が必要です。
+            </p>
+            <p class="text-slate-600 text-sm leading-relaxed mb-4 lang-en hidden">
+              Reliable leader election needs a quorum.
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="p-4 bg-green-50 border border-green-100 rounded-lg">
+                <span class="font-bold text-green-700 block mb-1 lang-ja">3ノード以上 (推奨)</span>
+                <span class="font-bold text-green-700 block mb-1 lang-en hidden">3+ Nodes (Recommended)</span>
+
+                <span class="text-xs text-green-600 lang-ja">1台障害に耐性があります。</span>
+                <span class="text-xs text-green-600 lang-en hidden">Tolerates one node failure.</span>
+              </div>
+              <div class="p-4 bg-amber-50 border border-amber-100 rounded-lg">
+                <span class="font-bold text-amber-700 block mb-1 lang-ja">1ノード</span>
+                <span class="font-bold text-amber-700 block mb-1 lang-en hidden">1 Node</span>
+
+                <span class="text-xs text-amber-600 lang-ja">開発・単体用途向け。SPOFとなります。</span>
+                <span class="text-xs text-amber-600 lang-en hidden">For development. Single Point of Failure
+                  (SPOF).</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="tab-content-config" class="hidden">
+            <h3 class="text-lg font-bold text-slate-900 mb-3"><i class="fas fa-cogs text-blue-500 mr-2"></i>
+              <span class="lang-ja">BucketName の共有</span>
+              <span class="lang-en hidden">BucketName Sharing</span>
+            </h3>
+
+            <div class="lang-ja">
+              <p class="text-slate-600 text-sm leading-relaxed mb-4">
+                同じ <code>BucketName</code> を複数 Candidate で共有する場合、以下の設定を一致させる必要があります（Manager が検証します）。
+              </p>
+              <ul class="list-disc pl-5 space-y-2 text-sm text-slate-600">
+                <li><span class="font-mono bg-slate-100 px-1 rounded">TTL</span> (リース期間)</li>
+                <li><span class="font-mono bg-slate-100 px-1 rounded">Replicas</span> (レプリケーション数)</li>
+              </ul>
+              <div class="mt-4 p-3 bg-blue-50 text-blue-800 text-xs rounded border border-blue-100">
+                <strong>Note:</strong> Replicas が 0 の場合、単体（Peers なし）では 1、クラスタ（Peers あり）では 3 がデフォルトになります。
+              </div>
+            </div>
+
+            <div class="lang-en hidden">
+              <p class="text-slate-600 text-sm leading-relaxed mb-4">
+                If multiple candidates share the same <code>BucketName</code>, their settings must match (enforced by
+                Manager).
+              </p>
+              <ul class="list-disc pl-5 space-y-2 text-sm text-slate-600">
+                <li><span class="font-mono bg-slate-100 px-1 rounded">TTL</span> (Lease duration)</li>
+                <li><span class="font-mono bg-slate-100 px-1 rounded">Replicas</span> (Replication factor)</li>
+              </ul>
+              <div class="mt-4 p-3 bg-blue-50 text-blue-800 text-xs rounded border border-blue-100">
+                <strong>Note:</strong> If Replicas is 0, the default is 1 for single-node (no Peers) and 3 for clustered
+                mode (Peers set).
+              </div>
+            </div>
+          </div>
+
+          <div id="tab-content-shutdown" class="hidden">
+            <h3 class="text-lg font-bold text-slate-900 mb-3"><i class="fas fa-power-off text-blue-500 mr-2"></i>
+              <span class="lang-ja">停止の手順</span>
+              <span class="lang-en hidden">Shutdown Procedure</span>
+            </h3>
+
+            <div class="lang-ja">
+              <p class="text-slate-600 text-sm leading-relaxed mb-4">
+                Candidate を停止（Run に渡した ctx を cancel）してから Manager を停止してください。
+              </p>
+              <ol class="list-decimal pl-5 space-y-2 text-sm text-slate-600">
+                <li><code>candidate.Run(ctx)</code> の <code>ctx</code> をキャンセル</li>
+                <li>選出ループの終了を待機</li>
+                <li><code>mgr.Shutdown()</code> を実行</li>
+              </ol>
+              <div class="mt-4 p-3 bg-red-50 text-red-800 text-xs rounded border border-red-100">
+                <strong>Warning:</strong> 先に Manager を止めると Candidate がリース解放（Resign）できず、次の選出が TTL まで遅れることがあります。
+              </div>
+            </div>
+
+            <div class="lang-en hidden">
+              <p class="text-slate-600 text-sm leading-relaxed mb-4">
+                Stop Candidates first (cancel the ctx passed to Run), then shut down the Manager.
+              </p>
+              <ol class="list-decimal pl-5 space-y-2 text-sm text-slate-600">
+                <li>Cancel the <code>ctx</code> passed to <code>candidate.Run(ctx)</code>.</li>
+                <li>Wait for election loop to exit.</li>
+                <li>Call <code>mgr.Shutdown()</code>.</li>
+              </ol>
+              <div class="mt-4 p-3 bg-red-50 text-red-800 text-xs rounded border border-red-100">
+                <strong>Warning:</strong> If you stop the Manager first, Candidates may fail to resign gracefully and
+                the next election can be delayed until TTL expires.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-slate-900 text-slate-400 py-8 text-center border-t border-slate-800">
+    <p class="text-sm">&copy; 2026 Ronin Project. Released under MIT License.</p>
+    <div class="mt-4 space-x-4 text-xl">
+      <a href="https://github.com/nonchan7720/ronin" target="_blank" class="hover:text-white transition-colors"><i
+          class="fab fa-github"></i></a>
+    </div>
+  </footer>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // --- Language Switcher Logic ---
+    let currentLang = 'ja';
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'ja' ? 'en' : 'ja';
+
+      // Toggle visibility using utility classes
+      const enElements = document.querySelectorAll('.lang-en');
+      const jaElements = document.querySelectorAll('.lang-ja');
+
+      jaElements.forEach(el => {
+        if (currentLang === 'ja') el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
+
+      enElements.forEach(el => {
+        if (currentLang === 'en') el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
+
+      // Update button text
+      document.getElementById('lang-btn-text').innerText = currentLang === 'ja' ? 'English' : '日本語';
+
+      // Re-render code to switch comments
+      renderCode(currentStep);
+    }
+
+    // --- Code Snippets ---
+    const codeSnippets = {
+      ja: `package main
+
+import (
+  "context"
+  "log"
+  "time"
+
+  "github.com/nonchan7720/ronin"
+)
+
+func main() {
+  ctx, cancel := context.WithCancel(context.Background())
+  defer cancel()
+
+  // 1) Manager 起動
+  mgr, err := ronin.NewManager(ronin.ServerConfig{
+    NodeID: "node-1", // required
+    // Peers: "nats://node-2:6222,nats://node-3:6222",
+  })
+  if err != nil { log.Fatalf("new manager: %v", err) }
+  if err := mgr.Start(ctx); err != nil { log.Fatalf("start manager: %v", err) }
+  defer mgr.Shutdown()
+
+  // 2) 特定の bucket/key に対する Candidate 作成
+  cand, err := mgr.NewCandidate(ronin.CandidateConfig{
+    CandidateID: "worker-1", // required
+    BucketName:  "election_bucket",
+    KeyName:     "shard_01",
+    TTL:         5 * time.Second,
+    OnElected: func() {
+      log.Println("became leader")
+    },
+    OnSteppingDown: func() {
+      log.Println("lost leadership")
+    },
+    OnLeaderChange: func(id string) {
+      log.Printf("leader changed: %s", id)
+    },
+  })
+  if err != nil { log.Fatalf("new candidate: %v", err) }
+
+  go func() {
+    if err := cand.Run(ctx); err != nil {
+      log.Printf("candidate stopped: %v", err)
+    }
+  }()
+
+  // Application loop
+  for {
+    select {
+    case <-time.After(1 * time.Second):
+      if cand.IsLeader() {
+        // Use cand.LeaderRev() as a fencing token if needed.
+        log.Println("do leader work")
+      }
+    case <-ctx.Done():
+      return
+    }
+  }
+}`,
+      en: `package main
+
+import (
+  "context"
+  "log"
+  "time"
+
+  "github.com/nonchan7720/ronin"
+)
+
+func main() {
+  ctx, cancel := context.WithCancel(context.Background())
+  defer cancel()
+
+  // 1) Start manager (embedded NATS server + shared connection)
+  mgr, err := ronin.NewManager(ronin.ServerConfig{
+    NodeID: "node-1", // required
+    // Peers: "nats://node-2:6222,nats://node-3:6222",
+  })
+  if err != nil { log.Fatalf("new manager: %v", err) }
+  if err := mgr.Start(ctx); err != nil { log.Fatalf("start manager: %v", err) }
+  defer mgr.Shutdown()
+
+  // 2) Create candidate for a specific bucket/key
+  cand, err := mgr.NewCandidate(ronin.CandidateConfig{
+    CandidateID: "worker-1", // required
+    BucketName:  "election_bucket",
+    KeyName:     "shard_01",
+    TTL:         5 * time.Second,
+    OnElected: func() {
+      log.Println("became leader")
+    },
+    OnSteppingDown: func() {
+      log.Println("lost leadership")
+    },
+    OnLeaderChange: func(id string) {
+      log.Printf("leader changed: %s", id)
+    },
+  })
+  if err != nil { log.Fatalf("new candidate: %v", err) }
+
+  go func() {
+    if err := cand.Run(ctx); err != nil {
+      log.Printf("candidate stopped: %v", err)
+    }
+  }()
+
+  // Application loop
+  for {
+    select {
+    case <-time.After(1 * time.Second):
+      if cand.IsLeader() {
+        // Use cand.LeaderRev() as a fencing token if needed.
+        log.Println("do leader work")
+      }
+    case <-ctx.Done():
+      return
+    }
+  }
+}`
+    };
+
+    // Define line ranges for steps (Identical for both languages as structure is same)
+    const steps = {
+      1: { start: 16, end: 22 },
+      2: { start: 25, end: 40 },
+      3: { start: 42, end: 59 }
+    };
+
+    let currentStep = 1;
+
+    function renderCode(activeStep) {
+      currentStep = activeStep;
+      // Select snippet based on current language
+      const currentSnippet = codeSnippets[currentLang];
+      const lines = currentSnippet.split('\n');
+      const container = document.getElementById('code-block');
+      container.innerHTML = ''; // Clear
+
+      lines.forEach((line, index) => {
+        const lineNum = index + 1;
+        const div = document.createElement('div');
+        div.className = "flex";
+
+        const numSpan = document.createElement('span');
+        numSpan.className = "text-slate-600 select-none w-8 flex-shrink-0 text-right mr-4";
+        numSpan.innerText = lineNum;
+
+        const codeSpan = document.createElement('pre');
+        codeSpan.className = "flex-1 whitespace-pre";
+        codeSpan.innerText = line;
+
+        // Highlight Logic
+        if (activeStep && steps[activeStep]) {
+          if (lineNum >= steps[activeStep].start && lineNum <= steps[activeStep].end) {
+            div.classList.add('code-highlight');
+            codeSpan.classList.add('text-blue-300', 'font-bold');
+          } else {
+            codeSpan.classList.add('text-slate-400', 'opacity-50');
+          }
+        } else {
+          // Default syntax coloring (simple)
+          if (line.includes('//')) codeSpan.className += " text-slate-500 italic";
+          else if (line.includes('func') || line.includes('package') || line.includes('import')) codeSpan.className += " text-purple-400";
+          else if (line.includes('"')) codeSpan.className += " text-green-400";
+          else codeSpan.className += " text-slate-200";
+        }
+
+        div.appendChild(numSpan);
+        div.appendChild(codeSpan);
+        container.appendChild(div);
+      });
+    }
+
+    function setStep(step) {
+      renderCode(step);
+      // Update button styles
+      for (let i = 1; i <= 3; i++) {
+        const btn = document.getElementById(`btn-step-${i}`);
+        if (i === step) {
+          btn.classList.remove('border-slate-700');
+          btn.classList.add('border-blue-500', 'bg-slate-800');
+          btn.querySelector('span').classList.replace('bg-slate-600', 'bg-blue-600');
+        } else {
+          btn.classList.add('border-slate-700');
+          btn.classList.remove('border-blue-500');
+          btn.querySelector('span').classList.replace('bg-blue-600', 'bg-slate-600');
+        }
+      }
+    }
+
+    // Initial Render
+    renderCode(1);
+    setStep(1);
+
+
+    // --- Architecture Info Logic ---
+    function showArchInfo(type) {
+      document.getElementById('arch-info-default').classList.add('hidden');
+      document.getElementById('arch-info-manager').classList.add('hidden');
+      document.getElementById('arch-info-candidate').classList.add('hidden');
+
+      document.getElementById(`arch-info-${type}`).classList.remove('hidden');
+    }
+
+
+    // --- Operational Tabs Logic ---
+    function showTab(tabName) {
+      // Hide all content
+      document.getElementById('tab-content-cluster').classList.add('hidden');
+      document.getElementById('tab-content-config').classList.add('hidden');
+      document.getElementById('tab-content-shutdown').classList.add('hidden');
+
+      // Show selected content
+      document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+
+      // Update buttons
+      ['cluster', 'config', 'shutdown'].forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tabName) {
+          btn.classList.add('tab-active');
+          btn.classList.remove('tab-inactive');
+        } else {
+          btn.classList.remove('tab-active');
+          btn.classList.add('tab-inactive');
+        }
+      });
+    }
+
+
+    // --- Copy to Clipboard ---
+    function copyInstall() {
+      const cmd = document.getElementById('install-text').innerText;
+      navigator.clipboard.writeText(cmd).then(() => {
+        const feedback = document.getElementById('copy-feedback');
+        feedback.classList.remove('opacity-0');
+        setTimeout(() => feedback.classList.add('opacity-0'), 2000);
+      });
+    }
+
+
+    // --- Chart.js Simulation ---
+    const ctx = document.getElementById('metricsChart').getContext('2d');
+    const dataPoints = 60;
+    const labels = Array.from({ length: dataPoints }, (_, i) => i);
+
+    // Mock data: Mostly 1 (Leader), occasionally 0 (Failover)
+    const leaderData = new Array(dataPoints).fill(1);
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Leader Status',
+          data: leaderData,
+          borderColor: '#3b82f6', // Blue 500
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false }
+        },
+        scales: {
+          x: { display: false },
+          y: {
+            min: -0.1,
+            max: 1.1,
+            ticks: { stepSize: 1, callback: v => v === 1 ? 'Leader' : (v === 0 ? 'Follower' : '') },
+            grid: { color: '#f1f5f9' }
+          }
+        },
+        animation: { duration: 0 }
+      }
+    });
+
+    // Simulate live data
+    setInterval(() => {
+      const currentData = chart.data.datasets[0].data;
+      currentData.shift();
+
+      // Random failover simulation (rare)
+      const rand = Math.random();
+      let newValue = 1;
+      if (rand > 0.98) newValue = 0; // 2% chance of drop
+
+      // If previous was 0, high chance to recover to 1
+      if (currentData[currentData.length - 1] === 0) {
+        newValue = Math.random() > 0.3 ? 1 : 0;
+      }
+
+      currentData.push(newValue);
+      chart.update();
+    }, 1000);
+
+  </script>
+</body>
+
+</html>
